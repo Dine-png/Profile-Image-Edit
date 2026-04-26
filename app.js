@@ -479,6 +479,33 @@ function setupScrollEffects() {
   });
 }
 
+function animatePlatformView(platform) {
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const targetView = platformViews.find((view) => view.dataset.platformView === platform);
+
+  if (!targetView) {
+    return;
+  }
+
+  const cards = Array.from(targetView.querySelectorAll(".mock-card"));
+
+  if (prefersReducedMotion || !document.body.classList.contains("motion-ready")) {
+    cards.forEach((card) => card.classList.add("is-visible"));
+    return;
+  }
+
+  cards.forEach((card) => {
+    card.classList.remove("is-visible");
+  });
+
+  window.requestAnimationFrame(() => {
+    cards.forEach((card, index) => {
+      card.style.transitionDelay = `${Math.min(index * 45, 180)}ms`;
+      card.classList.add("is-visible");
+    });
+  });
+}
+
 function applyDefaultState() {
   state.zoom = 1;
   state.offsetX = 0;
@@ -512,6 +539,8 @@ function setActivePlatform(platform) {
   platformViews.forEach((view) => {
     view.classList.toggle("is-active", view.dataset.platformView === platform);
   });
+
+  animatePlatformView(platform);
 }
 
 function loadImage(file) {
