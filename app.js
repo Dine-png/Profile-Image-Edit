@@ -115,6 +115,7 @@ const platformTabLabels = {
   discord: platformTabs.find((button) => button.dataset.platformTab === "discord"),
   instagram: platformTabs.find((button) => button.dataset.platformTab === "instagram"),
 };
+const revealTargets = Array.from(document.querySelectorAll(".hero, .panel, .mock-card"));
 const avatarCacheCanvas = document.createElement("canvas");
 avatarCacheCanvas.width = 400;
 avatarCacheCanvas.height = 400;
@@ -447,6 +448,37 @@ function applyLanguage(language) {
   window.localStorage.setItem("x-avatar-lab-language", nextLanguage);
 }
 
+function setupScrollEffects() {
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const supportsObserver = "IntersectionObserver" in window;
+
+  if (prefersReducedMotion || !supportsObserver) {
+    revealTargets.forEach((element) => element.classList.add("is-visible"));
+    return;
+  }
+
+  document.body.classList.add("motion-ready");
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) {
+        return;
+      }
+
+      entry.target.classList.add("is-visible");
+      observer.unobserve(entry.target);
+    });
+  }, {
+    threshold: 0.14,
+    rootMargin: "0px 0px -8% 0px",
+  });
+
+  revealTargets.forEach((element, index) => {
+    element.style.transitionDelay = `${Math.min(index * 35, 180)}ms`;
+    observer.observe(element);
+  });
+}
+
 function applyDefaultState() {
   state.zoom = 1;
   state.offsetX = 0;
@@ -774,4 +806,5 @@ applyDefaultState();
 applyLanguage(detectInitialLanguage());
 setActivePlatform("x");
 setExportAvailability(false);
+setupScrollEffects();
 renderAll();
