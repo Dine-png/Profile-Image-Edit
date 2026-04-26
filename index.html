@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X 프로필 사진 미리보기 툴</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-topbar">
+        <p class="eyebrow">X Avatar Lab</p>
+        <label class="language-picker">
+          <span id="languageLabel">언어</span>
+          <select id="languageSelect" aria-label="언어 선택">
+            <option value="ko">한국어</option>
+            <option value="ja">日本語</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+      </div>
+      <h1 id="heroTitle">X 프로필 사진 미리보기 툴</h1>
+      <p id="heroCopy" class="hero-copy">
+        인증 계정에서 프로필 사진을 바꾸기 전, 작은 노출 영역까지 먼저 확인하고
+        마음에 들면 바로 내보낼 수 있는 로컬 웹앱입니다.
+      </p>
+    </header>
+
+    <main class="layout">
+      <section class="panel controls-panel">
+        <div class="panel-header">
+          <h2 id="editTitle">편집</h2>
+          <p id="editCopy">이미지를 넣고 위치를 드래그해서 맞춰보세요.</p>
+        </div>
+
+        <div class="uploader">
+          <label class="file-picker" for="imageInput">
+            <span id="loadImageLabel">이미지 불러오기</span>
+            <input id="imageInput" type="file" accept="image/png,image/jpeg,image/gif">
+          </label>
+          <button id="resetButton" class="secondary-button" type="button">초기화</button>
+        </div>
+
+        <div class="stage-wrap">
+          <canvas id="editorCanvas" width="520" height="520" aria-label="프로필 사진 편집 캔버스"></canvas>
+          <div class="stage-help">
+            <span id="stageHelpOuter">바깥 원: 실제 원형 크롭</span>
+            <span id="stageHelpInner">안쪽 원: 작은 크기 안전영역</span>
+          </div>
+        </div>
+
+        <div class="controls-grid">
+          <label>
+            <span id="zoomLabel">확대</span>
+            <input id="zoomRange" type="range" min="0.6" max="3" step="0.01" value="1">
+            <output id="zoomValue">100%</output>
+          </label>
+
+          <label>
+            <span id="offsetXLabel">좌우 이동</span>
+            <input id="offsetXRange" type="range" min="-220" max="220" step="1" value="0">
+            <output id="offsetXValue">0px</output>
+          </label>
+
+          <label>
+            <span id="offsetYLabel">상하 이동</span>
+            <input id="offsetYRange" type="range" min="-220" max="220" step="1" value="0">
+            <output id="offsetYValue">0px</output>
+          </label>
+
+          <label>
+            <span id="rotationLabel">회전</span>
+            <input id="rotationRange" type="range" min="-180" max="180" step="1" value="0">
+            <output id="rotationValue">0 deg</output>
+          </label>
+
+          <label>
+            <span id="brightnessLabel">밝기</span>
+            <input id="brightnessRange" type="range" min="40" max="180" step="1" value="100">
+            <output id="brightnessValue">100%</output>
+          </label>
+
+          <label>
+            <span id="contrastLabel">대비</span>
+            <input id="contrastRange" type="range" min="40" max="180" step="1" value="100">
+            <output id="contrastValue">100%</output>
+          </label>
+
+          <label>
+            <span id="saturationLabel">채도</span>
+            <input id="saturationRange" type="range" min="0" max="200" step="1" value="100">
+            <output id="saturationValue">100%</output>
+          </label>
+
+          <label>
+            <span id="backgroundColorLabel">배경색</span>
+            <input id="backgroundColor" type="color" value="#ffffff">
+            <output id="backgroundColorValue">#ffffff</output>
+          </label>
+        </div>
+
+        <div class="export-bar">
+          <button id="export400Button" type="button" disabled>400x400 PNG 내보내기</button>
+          <button id="export800Button" class="secondary-button" type="button" disabled>800x800 PNG 내보내기</button>
+        </div>
+
+        <div class="meta-box">
+          <p id="imageMeta">아직 이미지를 불러오지 않았습니다.</p>
+          <p id="metaNote" class="meta-note">
+            현재 X 도움말 기준 권장 프로필 이미지는 <strong>400x400px</strong>, 지원 형식은
+            <strong>JPG/PNG/GIF</strong>, 최대 용량은 <strong>2MB</strong>입니다.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel preview-panel">
+        <div class="panel-header">
+          <h2 id="previewTitle">플랫폼별 미리보기</h2>
+          <p id="previewCopy">같은 편집 상태를 X, Discord, Instagram 느낌으로 번갈아 확인합니다.</p>
+        </div>
+
+        <div class="platform-switcher" role="tablist" aria-label="미리보기 플랫폼 선택">
+          <button class="platform-tab is-active" type="button" data-platform-tab="x" aria-selected="true">X</button>
+          <button class="platform-tab" type="button" data-platform-tab="discord" aria-selected="false">Discord</button>
+          <button class="platform-tab" type="button" data-platform-tab="instagram" aria-selected="false">Instagram</button>
+        </div>
+
+        <p id="previewNote" class="preview-note">실제 서비스 UI를 그대로 복제한 것은 아니고, 프로필 사진이 작게 보일 때의 인상을 빠르게 체크하기 위한 근사 프리뷰입니다.</p>
+
+        <div class="platform-view is-active" data-platform-view="x">
+          <div class="preview-grid">
+            <article class="mock-card composer-card">
+              <h3 id="xComposerTitle">글쓰기</h3>
+              <div class="composer-row">
+                <canvas id="composerPreview" data-avatar-size="40" width="40" height="40"></canvas>
+                <div id="xComposerInput" class="composer-input">무슨 일이 일어나고 있나요?</div>
+              </div>
+            </article>
+
+            <article class="mock-card timeline-card">
+              <h3 id="xTimelineTitle">타임라인</h3>
+              <div class="post-row">
+                <canvas id="timelinePreview" data-avatar-size="48" width="48" height="48"></canvas>
+                <div class="post-body">
+                  <p class="name-row">
+                    <strong>yourname</strong>
+                    <span class="badge">✔</span>
+                    <span id="xTimelineMeta">@yourhandle · 지금</span>
+                  </p>
+                  <p id="xTimelineBody">작은 아바타에서도 중심이 또렷하게 보이는지 확인해보세요.</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="mock-card notification-card">
+              <h3 id="xNotificationTitle">알림</h3>
+              <div class="notification-row">
+                <canvas id="notificationPreview" data-avatar-size="32" width="32" height="32"></canvas>
+                <p id="xNotificationBody"><strong>someone</strong> 님이 회원님의 게시글을 마음에 들어 합니다.</p>
+              </div>
+            </article>
+
+            <article class="mock-card sidebar-card">
+              <h3 id="xMicroTitle">아주 작은 아이콘</h3>
+              <div class="micro-row">
+                <div class="micro-preview">
+                  <canvas id="microPreview" data-avatar-size="24" width="24" height="24"></canvas>
+                </div>
+                <p id="xMicroBody">실제 24px 아바타를 3배 확대해 보여줍니다.</p>
+              </div>
+            </article>
+
+            <article class="mock-card profile-card">
+              <h3 id="xProfileTitle">프로필 페이지</h3>
+              <div class="profile-mock">
+                <div class="profile-banner"></div>
+                <canvas id="profilePreview" data-avatar-size="132" data-avatar-frame="true" width="132" height="132"></canvas>
+                <div class="profile-text">
+                  <p class="profile-name">
+                    <strong>yourname</strong>
+                    <span class="badge">✔</span>
+                  </p>
+                  <p>@yourhandle</p>
+                  <p id="xProfileBody">프로필 영역에서 얼굴이나 로고가 충분히 안정적으로 보이는지 체크합니다.</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="mock-card tips-card">
+              <h3 id="xTipsTitle">체크 포인트</h3>
+              <ul>
+                <li id="xTip1">원형 가장자리에 중요한 요소가 닿지 않는지 보기</li>
+                <li id="xTip2">24px / 32px에서 눈, 글자, 로고가 뭉개지지 않는지 보기</li>
+                <li id="xTip3">밝은 배경과 어두운 배경 모두에서 분리감이 있는지 보기</li>
+                <li id="xTip4">투명 PNG라면 배경색을 바꿔가며 가장자리 품질 확인하기</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+
+        <div class="platform-view" data-platform-view="discord">
+          <div class="preview-grid">
+            <article class="mock-card discord-card discord-sidebar-card">
+              <h3 id="discordSidebarTitle">서버 멤버 목록</h3>
+              <div class="discord-member">
+                <canvas data-avatar-size="32" width="32" height="32"></canvas>
+                <div>
+                  <p class="discord-name">yourname</p>
+                  <p id="discordSidebarStatus" class="discord-status">온라인</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="mock-card discord-card discord-chat-card">
+              <h3 id="discordChatTitle">채팅 메시지</h3>
+              <div class="discord-chat">
+                <canvas data-avatar-size="40" width="40" height="40"></canvas>
+                <div>
+                  <p class="discord-name">yourname <span id="discordChatMeta">오늘 8:24 PM</span></p>
+                  <p id="discordChatBody">어두운 배경 위에서도 얼굴이나 로고가 또렷하게 보이는지 체크합니다.</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="mock-card discord-card discord-popout-card">
+              <h3 id="discordPopoutTitle">프로필 팝아웃</h3>
+              <div class="discord-popout">
+                <div class="discord-popout-banner"></div>
+                <canvas data-avatar-size="80" data-avatar-frame="true" width="80" height="80"></canvas>
+                <p class="discord-name">yourname</p>
+                <p id="discordPopoutStatus" class="discord-status">Custom status goes here</p>
+              </div>
+            </article>
+
+            <article class="mock-card tips-card">
+              <h3 id="discordTipsTitle">Discord 체크 포인트</h3>
+              <ul>
+                <li id="discordTip1">짙은 배경에서 배경색이 아바타와 섞이지 않는지 보기</li>
+                <li id="discordTip2">32px 멤버 리스트에서 표정이나 심볼이 남는지 보기</li>
+                <li id="discordTip3">밝은 외곽선 없이도 모양이 분리되는지 보기</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+
+        <div class="platform-view" data-platform-view="instagram">
+          <div class="preview-grid">
+            <article class="mock-card instagram-card instagram-story-card">
+              <h3 id="instagramStoryTitle">스토리 링</h3>
+              <div class="instagram-story">
+                <div class="story-ring">
+                  <canvas data-avatar-size="66" width="66" height="66"></canvas>
+                </div>
+                <p>yourname</p>
+              </div>
+            </article>
+
+            <article class="mock-card instagram-card instagram-dm-card">
+              <h3 id="instagramDmTitle">DM 목록</h3>
+              <div class="instagram-dm-row">
+                <canvas data-avatar-size="44" width="44" height="44"></canvas>
+                <div>
+                  <p class="instagram-name">yourname</p>
+                  <p id="instagramDmBody">최근에 보낸 사진</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="mock-card instagram-card instagram-profile-card">
+              <h3 id="instagramProfileTitle">프로필 헤더</h3>
+              <div class="instagram-profile">
+                <canvas data-avatar-size="86" width="86" height="86"></canvas>
+                <div class="instagram-stats">
+                  <p><strong>12</strong><span id="instagramStatPosts">게시물</span></p>
+                  <p><strong>2.4k</strong><span id="instagramStatFollowers">팔로워</span></p>
+                  <p><strong>180</strong><span id="instagramStatFollowing">팔로잉</span></p>
+                </div>
+              </div>
+            </article>
+
+            <article class="mock-card tips-card">
+              <h3 id="instagramTipsTitle">Instagram 체크 포인트</h3>
+              <ul>
+                <li id="instagramTip1">스토리 링 안쪽에서 여백이 너무 빡빡하지 않은지 보기</li>
+                <li id="instagramTip2">새하얀 배경에서도 외곽이 흐려지지 않는지 보기</li>
+                <li id="instagramTip3">DM 목록처럼 44px 전후 크기에서 인상이 남는지 보기</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
